@@ -1,4 +1,4 @@
-# Haskell MOOC CLONED
+# Haskell MOOC CLONE
 
 This is cloned for doing exercises.
 
