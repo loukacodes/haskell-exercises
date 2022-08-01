@@ -121,7 +121,13 @@ capitalize str = unwords (map capitalizeSingleWord (words str))
 --   * the function takeWhile
 
 powers :: Int -> Int -> [Int]
-powers k max = todo
+powers k max = takeWhile (\x -> x <= max) listOfPows 
+    where listOfPows = [k^i | i <- [0..max]]
+-- My note: main difference between takeWhile and filter is that,
+-- takeWhile will break the loop as soon as it finds the first match, while 
+-- filter will continue to iterate the whole list
+-- [k^i | i <- [0..max]] <-- this syntax is called: list comprehensions
+-- and it is equivalent to: map (k^) [0..max]
 
 ------------------------------------------------------------------------------
 -- Ex 7: implement a functional while loop. While should be a function
@@ -144,7 +150,9 @@ powers k max = todo
 --     ==> Avvt
 
 while :: (a->Bool) -> (a->a) -> a -> a
-while check update value = todo
+while check update value = case check value of
+    True -> while check update (update value)
+    False -> value
 
 ------------------------------------------------------------------------------
 -- Ex 8: another version of a while loop. This time, the check
@@ -164,7 +172,9 @@ while check update value = todo
 -- Hint! Remember the case-of expression from lecture 2.
 
 whileRight :: (a -> Either b a) -> a -> b
-whileRight check x = todo
+whileRight check x = case check x of
+    Left b -> b
+    Right a -> whileRight check a
 
 -- for the whileRight examples:
 -- step k x doubles x if it's less than k
@@ -188,7 +198,8 @@ bomb x = Right (x-1)
 -- Hint! This is a great use for list comprehensions
 
 joinToLength :: Int -> [String] -> [String]
-joinToLength = todo
+joinToLength len list = [x | a <- list, b <- list, let x = a ++ b, length x == len]
+-- this is used list compprehensions
 
 ------------------------------------------------------------------------------
 -- Ex 10: implement the operator +|+ that returns a list with the first
@@ -201,7 +212,8 @@ joinToLength = todo
 --   [1,2,3] +|+ [4,5,6]  ==> [1,4]
 --   [] +|+ [True]        ==> [True]
 --   [] +|+ []            ==> []
-
+(+|+) :: [a] -> [a] -> [a]
+x +|+ y = take 1 x ++ take 1 y
 
 ------------------------------------------------------------------------------
 -- Ex 11: remember the lectureParticipants example from Lecture 2? We
@@ -218,8 +230,12 @@ joinToLength = todo
 --   sumRights [Left "bad!", Left "missing"]         ==>  0
 
 sumRights :: [Either a Int] -> Int
-sumRights = todo
+sumRights [] = 0
+sumRights (x:xs) = convert x + sumRights xs
 
+convert :: Either a Int -> Int
+convert (Left x) = 0
+convert (Right x) = x
 ------------------------------------------------------------------------------
 -- Ex 12: recall the binary function composition operation
 -- (f . g) x = f (g x). In this exercise, your task is to define a function
@@ -234,8 +250,12 @@ sumRights = todo
 --   multiCompose [(3*), (2^), (+1)] 0 ==> 6
 --   multiCompose [(+1), (2^), (3*)] 0 ==> 2
 
-multiCompose fs = todo
+multiCompose :: [(a -> a)] -> a -> a
+multiCompose fs x = multiCompose' (reverse fs) x
 
+multiCompose' :: [(a -> a)] -> a -> a
+multiCompose' [] x = x
+multiCompose' (f:fs) x = multiCompose' fs (f x)
 ------------------------------------------------------------------------------
 -- Ex 13: let's consider another way to compose multiple functions. Given
 -- some function f, a list of functions gs, and some value x, define
@@ -255,7 +275,8 @@ multiCompose fs = todo
 --   multiApp id [head, (!!2), last] "axbxc" ==> ['a','b','c'] i.e. "abc"
 --   multiApp sum [head, (!!2), last] [1,9,2,9,3] ==> 6
 
-multiApp = todo
+multiApp :: ([a] -> result) -> [(b -> a)] -> b -> result
+multiApp f gs x = f ([i | func <- gs, let i = func x])
 
 ------------------------------------------------------------------------------
 -- Ex 14: in this exercise you get to implement an interpreter for a
@@ -289,5 +310,17 @@ multiApp = todo
 -- using (:). If you build the list in an argument to a helper
 -- function, the surprise won't work.
 
+
 interpreter :: [String] -> [String]
-interpreter commands = todo
+interpreter fs = interpreter' fs 0 0
+
+interpreter' :: [String] -> Int -> Int -> [String]
+interpreter' [] _ _ = []
+interpreter' (f:fs) x y = case f of
+    "up" -> interpreter' fs x (y + 1)
+    "down" -> interpreter' fs x (y - 1)
+    "left" -> interpreter' fs (x - 1) y
+    "right" -> interpreter' fs (x + 1) y
+    "printX" -> show x : interpreter' fs x y
+    "printY" -> show y : interpreter' fs x y
+-- show x : interpreter' fs x y: Building and Consuming a List
