@@ -35,7 +35,9 @@ import Data.Array
 -- you remove the Eq a => constraint from the type!
 
 allEqual :: Eq a => [a] -> Bool
-allEqual xs = todo
+allEqual [] = True
+allEqual [x] = True
+allEqual (x:y:xs) = if x /= y then False else allEqual (y:xs)
 
 ------------------------------------------------------------------------------
 -- Ex 2: implement the function distinct which returns True if all
@@ -50,8 +52,9 @@ allEqual xs = todo
 --   distinct [1,2] ==> True
 
 distinct :: Eq a => [a] -> Bool
-distinct = todo
-
+distinct xs 
+    | length xs == length (nub xs) = True
+    | otherwise = False
 ------------------------------------------------------------------------------
 -- Ex 3: implement the function middle that returns the middle value
 -- (not the smallest or the largest) out of its three arguments.
@@ -63,7 +66,8 @@ distinct = todo
 --   middle 'b' 'a' 'c'  ==> 'b'
 --   middle 1 7 3        ==> 3
 
-middle = todo
+middle :: Ord a => a -> a -> a -> a
+middle x y z = a where a = sort [x, y, z] !! 1
 
 ------------------------------------------------------------------------------
 -- Ex 4: return the range of an input list, that is, the difference
