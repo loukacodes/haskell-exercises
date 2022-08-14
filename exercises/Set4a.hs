@@ -21,7 +21,7 @@ import Data.List
 import Data.Ord
 import qualified Data.Map as Map
 import Data.Array
-
+import Data.Foldable
 ------------------------------------------------------------------------------
 -- Ex 1: implement the function allEqual which returns True if all
 -- values in the list are equal.
@@ -82,9 +82,8 @@ middle x y z = a where a = sort [x, y, z] !! 1
 --   rangeOf [4,2,1,3]          ==> 3
 --   rangeOf [1.5,1.0,1.1,1.2]  ==> 0.5
 
-rangeOf :: [a] -> a
-rangeOf = todo
-
+rangeOf :: (Ord a) => (Num a) => [a] -> a
+rangeOf xs = sortedXs !! (length xs - 1) - sortedXs !! 0 where sortedXs = sort xs
 ------------------------------------------------------------------------------
 -- Ex 5: given a (non-empty) list of (non-empty) lists, return the longest
 -- list. If there are multiple lists of the same length, return the list that
@@ -101,7 +100,12 @@ rangeOf = todo
 --   longest [[1,2,3],[4,5],[6]] ==> [1,2,3]
 --   longest ["bcd","def","ab"] ==> "bcd"
 
-longest = todo
+longest :: Ord a => [[a]] -> [a]
+longest [x] = x
+longest (x:y:xs) 
+    | length x > length y = longest (x:xs) 
+    | length x == length y = if x !! 0 > y !! 0 then longest (y:xs) else longest (x:xs)
+    | otherwise = longest (y:xs) 
 
 ------------------------------------------------------------------------------
 -- Ex 6: Implement the function incrementKey, that takes a list of
@@ -117,8 +121,11 @@ longest = todo
 --   incrementKey True [(True,1),(False,3),(True,4)] ==> [(True,2),(False,3),(True,5)]
 --   incrementKey 'a' [('a',3.4)] ==> [('a',4.4)]
 
-incrementKey :: k -> [(k,v)] -> [(k,v)]
-incrementKey = todo
+incrementKey :: (Ord k, Num v) => k -> [(k,v)] -> [(k,v)]
+incrementKey _ [] = []
+incrementKey key ((k,v): xs)
+    | key == k = (k, v + 1) : incrementKey key xs
+    | otherwise = (k, v) : incrementKey key xs
 
 ------------------------------------------------------------------------------
 -- Ex 7: compute the average of a list of values of the Fractional
@@ -133,7 +140,8 @@ incrementKey = todo
 -- length to a Fractional
 
 average :: Fractional a => [a] -> a
-average xs = todo
+average xs = sum xs / fromIntegral (length xs)
+-- TODO: should get back to this...
 
 ------------------------------------------------------------------------------
 -- Ex 8: given a map from player name to score and two players, return
@@ -152,7 +160,11 @@ average xs = todo
 --     ==> "Lisa"
 
 winner :: Map.Map String Int -> String -> String -> String
-winner scores player1 player2 = todo
+winner scores player1 player2 
+    | f player1 >= f player2 = player1 
+    | otherwise = player2
+        where f k = Map.findWithDefault 0 k scores
+    
 
 ------------------------------------------------------------------------------
 -- Ex 9: compute how many times each value in the list occurs. Return
@@ -167,7 +179,21 @@ winner scores player1 player2 = todo
 --     ==> Map.fromList [(False,3),(True,1)]
 
 freqs :: (Eq a, Ord a) => [a] -> Map.Map a Int
-freqs xs = todo
+freqs [] = Map.empty
+freqs xs = foldr (Map.alter freqCounts) Map.empty xs
+
+freqCounts :: Num a => Maybe a -> Maybe a
+freqCounts (Just mv) = Just (mv + 1)
+freqCounts Nothing = Just 1
+
+-- My note: Map.empty is actually just Map.fromList [], it is used to create a map without any entries
+-- Another note: foldr is just like reduce in JavaScript
+-- Explain:
+-- foldr (Map.alter freqCounts) [] [False,False,False,True] 
+            -- ==> foldr (Map.alter freqCounts) [] (False:False:False:True:[])
+-- foldr calls its argument function f ("Map.alter freqCounts" function in this case) repeatedly with two arguments:
+-- * The first argument is the current element from the list.
+-- * The second argument is what f returned for the rest of the list.
 
 ------------------------------------------------------------------------------
 -- Ex 10: recall the withdraw example from the course material. Write a
@@ -195,7 +221,14 @@ freqs xs = todo
 --     ==> fromList [("Bob",100),("Mike",50)]
 
 transfer :: String -> String -> Int -> Map.Map String Int -> Map.Map String Int
-transfer from to amount bank = todo
+transfer from to amount bank 
+    | Map.notMember from bank = bank
+    | Map.notMember to bank = bank
+    | Map.findWithDefault 0 from bank < amount = bank
+    | amount < 0 = bank
+    | otherwise = transfer' from to amount bank
+
+transfer' from to amount bank = Map.adjust (amount +) to bank' where bank' = Map.adjust (-amount +) from bank
 
 ------------------------------------------------------------------------------
 -- Ex 11: given an Array and two indices, swap the elements in the indices.
@@ -205,7 +238,8 @@ transfer from to amount bank = todo
 --         ==> array (1,4) [(1,"one"),(2,"three"),(3,"two"),(4,"four")]
 
 swap :: Ix i => i -> i -> Array i a -> Array i a
-swap i j arr = todo
+swap i j arr = arr // [(i, arr ! j), (j, arr ! i)]
+-- My note: arr // is array update, arr ! index is array look up
 
 ------------------------------------------------------------------------------
 -- Ex 12: given an Array, find the index of the largest element. You
@@ -216,4 +250,5 @@ swap i j arr = todo
 -- Hint: check out Data.Array.indices or Data.Array.assocs
 
 maxIndex :: (Ix i, Ord a) => Array i a -> i
-maxIndex = todo
+maxIndex arr =  fst (maximumBy (\a b -> compare (snd a) (snd b)) (assocs (arr)))
+
