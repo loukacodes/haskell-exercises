@@ -112,7 +112,10 @@ mapTree f (Node x l r) = (Node (f x) (mapTree f l) (mapTree f r))
 --                 (Node 3 Empty Empty))
 
 cull :: Eq a => a -> Tree a -> Tree a
-cull val tree = todo
+cull _ Empty = Empty
+cull val (Node x l r) 
+  | val == x = Empty
+  | otherwise = Node x (cull val l) (cull val r)
 
 ------------------------------------------------------------------------------
 -- Ex 7: check if a tree is ordered. A tree is ordered if:
@@ -154,7 +157,10 @@ cull val tree = todo
 --                     (Node 3 Empty Empty))   ==>   True
 
 isOrdered :: Ord a => Tree a -> Bool
-isOrdered = todo
+isOrdered Empty = True
+isOrdered (Node x l r) 
+  | allValues (<x) l && allValues (>x) r && isOrdered l && isOrdered r = True
+  | otherwise = False
 
 ------------------------------------------------------------------------------
 -- Ex 8: a path in a tree can be represented as a list of steps that
@@ -173,7 +179,11 @@ data Step = StepL | StepR
 --   walk [StepL,StepL] (Node 1 (Node 2 Empty Empty) Empty)  ==>  Nothing
 
 walk :: [Step] -> Tree a -> Maybe a
-walk = todo
+walk [] (Node x _ _) = Just x
+walk _ Empty = Nothing
+walk (s:stepList) (Node x l r) 
+  | s == StepL = walk stepList l
+  | otherwise = walk stepList r
 
 ------------------------------------------------------------------------------
 -- Ex 9: given a tree, a path and a value, set the value at the end of
