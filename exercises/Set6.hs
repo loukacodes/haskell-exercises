@@ -25,10 +25,13 @@ instance Eq Country where
 -- Remember minimal complete definitions!
 
 instance Ord Country where
-  compare = todo -- implement me?
-  (<=) = todo -- and me?
-  min = todo -- and me?
-  max = todo -- and me?
+  compare x y 
+    | x == y = EQ
+    | x == Finland || y == Switzerland = LT
+    | x == Switzerland || y == Finland = GT
+  (<=) x y = compare x y /= GT
+  min x y = if x <= y then x else y
+  max x y = if x <= y then y else x
 
 ------------------------------------------------------------------------------
 -- Ex 3: Implement an Eq instance for the type Name which contains a String.
@@ -44,8 +47,11 @@ data Name = Name String
   deriving Show
 
 instance Eq Name where
-  (==) = todo
+  (==) (Name x) (Name y) 
+    | map toLower x == map toLower y = True
+    | otherwise = False
 
+-- because toLower :: Char -> Char, it only converts one character at a time, so mapping is needed
 ------------------------------------------------------------------------------
 -- Ex 4: here is a list type parameterized over the type it contains.
 -- Implement an instance "Eq (List a)" that compares the lists element
@@ -58,7 +64,12 @@ data List a = Empty | LNode a (List a)
   deriving Show
 
 instance Eq a => Eq (List a) where
-  (==) = todo
+  (==) Empty Empty = True
+  (==) Empty _     = False
+  (==) _ Empty     = False
+  (==) (LNode a b) (LNode c d)
+    | a /= c    = False
+    | otherwise = (==) b d
 
 ------------------------------------------------------------------------------
 -- Ex 5: below you'll find two datatypes, Egg and Milk. Implement a
@@ -78,7 +89,15 @@ data Egg = ChickenEgg | ChocolateEgg
 data Milk = Milk Int -- amount in litres
   deriving Show
 
+class Price a where
+  price :: a -> Int
 
+instance Price Egg where
+  price ChickenEgg = 20
+  price ChocolateEgg = 30
+
+instance Price Milk where
+  price (Milk l) = l * 15
 ------------------------------------------------------------------------------
 -- Ex 6: define the necessary instance hierarchy in order to be able
 -- to compute these:
@@ -88,7 +107,15 @@ data Milk = Milk Int -- amount in litres
 -- price [Just ChocolateEgg, Nothing, Just ChickenEgg]  ==> 50
 -- price [Nothing, Nothing, Just (Milk 1), Just (Milk 2)]  ==> 45
 
+instance Price a => Price (Maybe a) where
+  price Nothing  = 0
+  price (Just a) = price a
 
+instance Price a => Price [a] where
+  price [] = 0
+  price (x:xs) = price x + price xs
+
+-- Good ol' pattern matching!
 ------------------------------------------------------------------------------
 -- Ex 7: below you'll find the datatype Number, which is either an
 -- Integer, or a special value Infinite.
@@ -98,6 +125,12 @@ data Milk = Milk Int -- amount in litres
 
 data Number = Finite Integer | Infinite
   deriving (Show,Eq)
+
+instance Ord Number where
+  (<=) Infinite Infinite = True
+  (<=) Infinite _ = False
+  (<=) _ Infinite = True
+  (<=) (Finite x) (Finite y) = if x > y then False else True
 
 
 ------------------------------------------------------------------------------
